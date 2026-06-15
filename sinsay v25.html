@@ -543,7 +543,7 @@ function buildScanQueue(){
     const offtrend=dec==='offtrend';
     sizes.forEach(([size,qty])=>{
       const d=calcDistForSize(qty,prod[3],offtrend,prod[1]);
-      scanQueue[model+'|'+size]={fc:d.fc,dr:d.dr,k1:d.k1,k2:d.k2,bz:d.bz,ht:d.ht||0,total:qty,scanned:0};
+      scanQueue[model+'|'+size]={fc:d.fc,dr:d.dr,k1:d.k1,k2:d.k2,bz:d.bz,ht:d.ht||0,ag:0,total:qty,scanned:0};
     });
   });
 }
@@ -557,7 +557,7 @@ function getDestForScan(model,size){
     const sizeData=(S[model]||[]).find(s=>s[0]===size);
     const qty=sizeData?sizeData[1]:1;
     const d=calcDistForSize(qty,prod[3],false,prod[1]);
-    scanQueue[key]={...d,total:qty,scanned:0};
+    scanQueue[key]={fc:d.fc,dr:d.dr,k1:d.k1,k2:d.k2,bz:d.bz,ht:d.ht||0,ag:0,total:qty,scanned:0};
   }
   const q=scanQueue[key];
   // Assign in priority order
@@ -799,6 +799,9 @@ function processScan(ean){
     // Init overflow counter if needed
     if(!scanQueue[key2]) scanQueue[key2]={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,total:0,scanned:0};
     scanQueue[key2].ht=scanQueue[key2].ht||0; // ensure exists
+    // Make sure scanQueue tracks overflow scans too
+    if(!scanQueue[key2]) scanQueue[key2]={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0,total:0,scanned:0};
+    scanQueue[key2].scanned++;  // track overflow in scanned count
     scanLog.push({ean,model,size,dest:overflowDest,key:key2,ts:Date.now(),overflow:true});
     scanTotals[overflowDest]=(scanTotals[overflowDest]||0)+1;
 
@@ -897,10 +900,15 @@ function processScan(ean){
 function undoScan(){
   if(!scanLog.length)return;
   const last=scanLog.pop();
-  scanTotals[last.dest]--;
+  scanTotals[last.dest]=(scanTotals[last.dest]||1)-1;
   if(scanQueue[last.key]){
-    scanQueue[last.key][last.dest]++;
-    scanQueue[last.key].scanned--;
+    if(last.overflow){
+      // Overflow undo: just decrement scanned
+      scanQueue[last.key].scanned=Math.max(0,(scanQueue[last.key].scanned||1)-1);
+    } else {
+      scanQueue[last.key][last.dest]++;
+      scanQueue[last.key].scanned=Math.max(0,(scanQueue[last.key].scanned||1)-1);
+    }
   }
   if(!scanLog.length){
     $('sr-wrap').style.display='none';
