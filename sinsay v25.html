@@ -791,19 +791,22 @@ function processScan(ean){
   const key=model+'|'+size;
   const q=scanQueue[key];
 
-  // OVERFLOW - all planned units scanned, extra goes to Бөөн automatically
+  // OVERFLOW - all planned units scanned, extra goes to Агуулах automatically
   if(dest===null){
-    // Auto-assign overflow to Бөөн (ht)
     const overflowDest='ag';
     const key2=model+'|'+size;
-    // Init overflow counter if needed
-    if(!scanQueue[key2]) scanQueue[key2]={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,total:0,scanned:0};
-    scanQueue[key2].ht=scanQueue[key2].ht||0; // ensure exists
-    // Make sure scanQueue tracks overflow scans too
-    if(!scanQueue[key2]) scanQueue[key2]={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0,total:0,scanned:0};
-    scanQueue[key2].scanned++;  // track overflow in scanned count
-    scanLog.push({ean,model,size,dest:overflowDest,key:key2,ts:Date.now(),overflow:true});
-    scanTotals[overflowDest]=(scanTotals[overflowDest]||0)+1;
+    // Ensure scanQueue entry exists with ag field
+    if(!scanQueue[key2]){
+      scanQueue[key2]={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0,total:0,scanned:0};
+    }
+    if(scanQueue[key2].ag===undefined) scanQueue[key2].ag=0;
+    scanQueue[key2].ag++;
+    scanQueue[key2].scanned++;
+    // Push to scanLog with dest='ag'
+    scanLog.push({ean,model,size,dest:'ag',key:key2,ts:Date.now(),overflow:true});
+    // Update totals
+    if(scanTotals.ag===undefined) scanTotals.ag=0;
+    scanTotals.ag++;
 
     // Show result with overflow warning
     $('sr-wrap').style.display='block';
