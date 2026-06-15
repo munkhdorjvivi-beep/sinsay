@@ -1234,25 +1234,25 @@ function renderHistList(){
   const listEl=$('hist-date-list');
   const byDate=getScansByDate();
   const dates=Object.keys(byDate).sort().reverse();
-  
   if(!dates.length){
     listEl.innerHTML='<div style="font-size:13px;color:var(--txt3);text-align:center;padding:20px">— скан хийгдээгүй —</div>';
     return;
   }
-  
   const colors={fc:'var(--vi)',dr:'var(--dr)',k1:'var(--k1)',k2:'var(--k2)',bz:'var(--ba)',ht:'#ff9f43',ag:'#818cf8'};
-  
-  listEl.innerHTML=dates.map(date=>{
+  listEl.innerHTML='';
+  dates.forEach(date=>{
     const scans=byDate[date];
     const total=scans.length;
-    const totals={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0};
-    scans.forEach(s=>totals[s.dest]++);
-    const storeStr=['fc','dr','k1','k2','bz','ht']
+    const totals={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0};
+    scans.forEach(s=>totals[s.dest]=(totals[s.dest]||0)+1);
+    const storeStr=['fc','dr','k1','k2','bz','ht','ag']
       .filter(k=>totals[k]>0)
       .map(k=>'<span style="color:'+colors[k]+';font-weight:700">'+totals[k]+'</span><span style="color:var(--txt3);font-size:9px"> '+DEST_CFG[k].icon+'</span>')
       .join(' ');
-    return '<div style="background:var(--s2);border-radius:12px;border:1px solid var(--s3);overflow:hidden;">'
-      +'<div onclick="renderHistDetail(\"'+date+'\")" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;">'
+    const div=document.createElement('div');
+    div.style.cssText='background:var(--s2);border-radius:12px;border:1px solid var(--s3);overflow:hidden;';
+    div.innerHTML=
+      '<div onclick="renderHistDetail(this.dataset.date)" data-date="'+date+'" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;">'
         +'<div>'
           +'<div style="font-size:15px;font-weight:700;color:var(--txt);font-family:monospace">'+date+'</div>'
           +'<div style="font-size:11px;color:var(--txt2);margin-top:3px">'+storeStr+'</div>'
@@ -1261,13 +1261,15 @@ function renderHistList(){
           +'<div style="font-size:20px;font-weight:800;color:var(--go);font-family:monospace">'+total+'</div>'
           +'<div style="font-size:10px;color:var(--txt2)">ш скан</div>'
         +'</div>'
-      +'</div>'
-      +'<button onclick="event.stopPropagation();histSelectedDate=\"'+date+'\";exportHistDate()" '
-        +'style="width:100%;padding:10px;background:#1a1300;border:none;border-top:1px solid var(--s3);color:var(--go);font-size:12px;font-weight:700;cursor:pointer;">'
-        +'⬇️ Excel татах'
-      +'</button>'
-    +'</div>';
-  }).join('');
+      +'</div>';
+    // Add download button separately (cleaner DOM approach)
+    const btn=document.createElement('button');
+    btn.textContent='⬇️ Excel татах';
+    btn.style.cssText='width:100%;padding:10px;background:#1a1300;border:none;border-top:1px solid var(--s3);color:var(--go);font-size:12px;font-weight:700;cursor:pointer;';
+    btn.onclick=function(e){e.stopPropagation();downloadHistDate(''+date);};
+    div.appendChild(btn);
+    listEl.appendChild(div);
+  });
 }
 
 function renderHistDetail(date){
@@ -1318,6 +1320,11 @@ function showHistList(){
   $('hist-detail').style.display='none';
 }
 
+function downloadHistDate(date){
+  histSelectedDate=date;
+  exportHistDate();
+}
+
 function exportHistDate(){
   if(!histSelectedDate)return;
   const byDate=getScansByDate();
@@ -1339,8 +1346,8 @@ function exportHistDate(){
   const summary={};
   scans.forEach(s=>{
     const key=s.model+'|'+s.size;
-    if(!summary[key])summary[key]={model:s.model,size:s.size,fc:0,dr:0,k1:0,k2:0,bz:0,ht:0};
-    summary[key][s.dest]++;
+    if(!summary[key])summary[key]={model:s.model,size:s.size,fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0};
+    summary[key][s.dest]=(summary[key][s.dest]||0)+1;
   });
 
   function getEAN(model,size){
