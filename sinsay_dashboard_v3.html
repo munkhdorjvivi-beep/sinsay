@@ -23,17 +23,17 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
 .main-pct{font-size:18px;color:#22c55e;font-family:monospace;font-weight:700}
 .prog-bar{background:#1a1a1a;border-radius:6px;height:12px;overflow:hidden;margin-bottom:8px}
 .prog-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:6px;transition:width .5s}
-.main-meta{display:flex;justify-content:space-between;font-size:11px;color:#555}
+.main-meta{display:flex;justify-content:space-between;font-size:13px;color:#888}
 
 /* STORE GRID */
-.section-title{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 8px}
+.section-title{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 8px;font-weight:700}
 .store-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .store-card{border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.08)}
-.store-name{font-size:10px;opacity:.7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.store-num{font-size:24px;font-weight:800;font-family:monospace;margin-bottom:6px}
+.store-name{font-size:12px;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.store-num{font-size:28px;font-weight:800;font-family:monospace;margin-bottom:6px}
 .store-prog{background:rgba(0,0,0,.3);border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px}
 .store-prog-fill{height:100%;border-radius:4px;transition:width .5s}
-.store-meta{display:flex;justify-content:space-between;font-size:10px;opacity:.6}
+.store-meta{display:flex;justify-content:space-between;font-size:12px;color:#888;font-weight:600}
 .store-card.fc{background:#0d1f3c;border-color:#1e40af}.store-card.fc .store-num{color:#3b82f6}.store-card.fc .store-prog-fill{background:#3b82f6}
 .store-card.dr{background:#1e0d3c;border-color:#6d28d9}.store-card.dr .store-num{color:#8b5cf6}.store-card.dr .store-prog-fill{background:#8b5cf6}
 .store-card.k1{background:#1a0d00;border-color:#92400e}.store-card.k1 .store-num{color:#f59e0b}.store-card.k1 .store-prog-fill{background:#f59e0b}
@@ -45,8 +45,8 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
 /* SPEED */
 .speed-card{background:#111;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .speed-item{text-align:center;padding:10px;background:#1a1a1a;border-radius:8px}
-.speed-num{font-size:22px;font-weight:800;font-family:monospace;color:#facc15}
-.speed-label{font-size:10px;color:#555;margin-top:3px;text-transform:uppercase}
+.speed-num{font-size:28px;font-weight:800;font-family:monospace;color:#facc15}
+.speed-label{font-size:12px;color:#888;margin-top:3px;text-transform:uppercase;font-weight:600}
 
 /* DAILY CHART */
 .chart-card{background:#111;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:14px}
@@ -54,8 +54,8 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
 .chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
 .chart-bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#3b82f6,#1e40af);min-height:2px;transition:height .5s}
 .chart-bar.today{background:linear-gradient(180deg,#22c55e,#166534)}
-.chart-label{font-size:9px;color:#555;text-align:center}
-.chart-num{font-size:10px;color:#888;text-align:center}
+.chart-label{font-size:11px;color:#888;text-align:center;font-weight:600}
+.chart-num{font-size:11px;color:#aaa;text-align:center;font-weight:600}
 
 /* ALERT */
 .alert{background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#fca5a5;display:none}
@@ -67,10 +67,10 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
 .device-row:last-child{margin-bottom:0}
 .device-info{flex:1}
 .device-name{font-size:12px;font-weight:700;color:#facc15}
-.device-time{font-size:10px;color:#555;margin-top:2px}
+.device-time{font-size:12px;color:#888;margin-top:2px}
 .device-stats{text-align:right}
 .device-count{font-size:16px;font-weight:700;color:#22c55e;font-family:monospace}
-.device-pct{font-size:10px;color:#555}
+.device-pct{font-size:12px;color:#888;font-weight:600}
 .device-speed{font-size:10px;color:#3b82f6;margin-top:2px}
 </style>
 </head>
@@ -94,7 +94,7 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
 
 <!-- MAIN PROGRESS -->
 <div class="main-card">
-  <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">TIR АНГИЛЛЫН ЯВЦ (ӨВӨРМӨЦ СКАН)</div>
+  <div style="font-size:13px;color:#aaa;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-weight:600">TIR АНГИЛЛЫН ЯВЦ (ӨВӨРМӨЦ СКАН)</div>
   <div class="main-nums">
     <span id="total-scanned" class="main-big">0</span>
     <span class="main-total">/ 30,223 ш</span>
@@ -103,7 +103,7 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
   <div class="prog-bar"><div id="progress-fill" class="prog-fill" style="width:0%"></div></div>
   <div class="main-meta">
     <span id="last-update">—</span>
-    <span id="remaining-text" style="color:#facc15">—</span>
+    <span id="remaining-text" style="color:#facc15;font-weight:700;font-size:14px">—</span>
   </div>
 </div>
 
@@ -135,7 +135,7 @@ body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-seri
 <div class="section-title">Дэлгүүрийн хуваарилалт</div>
 
 <!-- Plans (from preload) -->
-<div style="font-size:10px;color:#3b82f6;margin-bottom:6px">📋 Нийт төлөвлөгөө (preload үндэслэн)</div>
+<div style="font-size:13px;color:#60a5fa;margin-bottom:8px;font-weight:600">📋 Нийт төлөвлөгөө (preload үндэслэн)</div>
 <div class="store-grid">
   <div class="store-card fc">
     <div class="store-name">Фүүд Сити</div>
