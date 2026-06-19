@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SINSAY — Dashboard</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Segoe UI',sans-serif;min-height:100vh;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:12px 16px;background:#111;border-radius:12px;border:1px solid #222}
+.logo{font-size:18px;font-weight:800;color:#facc15;letter-spacing:2px}
+.status{font-size:12px;padding:4px 10px;border-radius:6px;background:#1a1a1a}
+.card{background:#111;border:1px solid #222;border-radius:12px;padding:16px;margin-bottom:16px}
+.card-title{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.big-num{font-size:36px;font-weight:800;font-family:monospace}
+.progress-bar{background:#1a1a1a;border-radius:4px;height:10px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:4px;transition:width .5s}
+.store-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:600px){.store-grid{grid-template-columns:repeat(2,1fr)}}
+.store-card{border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+.store-num{font-size:24px;font-weight:800;font-family:monospace}
+.store-label{font-size:10px;opacity:.7;margin-top:2px}
+.device-list{display:flex;flex-direction:column;gap:6px}
+.device-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:8px;border:1px solid #2a2a2a}
+.device-count{font-size:16px;font-weight:700;color:#22c55e;font-family:monospace}
+.device-time{font-size:10px;color:#555}
+.refresh-btn{padding:8px 16px;border-radius:8px;background:#1e3a5f;border:1px solid #2563eb;color:#60a5fa;font-size:12px;cursor:pointer}
+.last-update{font-size:10px;color:#444}
+.warning{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);border-radius:8px;padding:8px 12px;font-size:11px;color:#fca5a5;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">SINSAY DASHBOARD</div>
+    <div style="font-size:11px;color:#facc15;margin-top:2px">TIR: <span id="current-tir">sinsay_tir1</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="conn-status" class="status" style="color:#facc15">🟡 Холбогдож байна...</span>
+    <button class="refresh-btn" onclick="location.reload()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- TIR Progress -->
+<div class="card">
+  <div class="card-title">TIR Ангиллын явц (өвөрмөц скан)</div>
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px">
+    <span id="total-scanned" class="big-num" style="color:#facc15">0</span>
+    <span style="color:#444;font-size:18px">/ 30,223 ш</span>
+    <span id="total-pct" style="font-size:14px;color:#22c55e;font-family:monospace">0%</span>
+  </div>
+  <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+  <div style="display:flex;justify-content:space-between;margin-top:6px">
+    <span id="last-update" class="last-update">—</span>
+    <span id="scan-count-info" class="last-update">—</span>
+  </div>
+</div>
+
+<!-- Store breakdown -->
+<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Дэлгүүрийн хуваарилалт</div>
+<div class="store-grid">
+  <div class="store-card" style="background:#0d1f3c;border-color:#1e40af">
+    <div class="store-num" style="color:#3b82f6" id="st-fc">0</div>
+    <div class="store-label">Фүүд Сити</div>
+  </div>
+  <div class="store-card" style="background:#1e0d3c;border-color:#6d28d9">
+    <div class="store-num" style="color:#8b5cf6" id="st-dr">0</div>
+    <div class="store-label">Драгон</div>
+  </div>
+  <div class="store-card" style="background:#1a0d00;border-color:#92400e">
+    <div class="store-num" style="color:#f59e0b" id="st-k1">0</div>
+    <div class="store-label">Баянгол</div>
+  </div>
+  <div class="store-card" style="background:#1a1200;border-color:#a16207">
+    <div class="store-num" style="color:#eab308" id="st-k2">0</div>
+    <div class="store-label">УИД</div>
+  </div>
+  <div class="store-card" style="background:#0d1f11;border-color:#166534">
+    <div class="store-num" style="color:#22c55e" id="st-bz">0</div>
+    <div class="store-label">Эрдэнэт</div>
+  </div>
+  <div class="store-card" style="background:#1f1000;border-color:#7c2d12">
+    <div class="store-num" style="color:#f97316" id="st-ht">0</div>
+    <div class="store-label">Бөөн</div>
+  </div>
+  <div class="store-card" style="background:#0f0f2e;border-color:#3730a3">
+    <div class="store-num" style="color:#818cf8" id="st-ag">0</div>
+    <div class="store-label">Агуулах</div>
+  </div>
+</div>
+
+<!-- Devices -->
+<div class="card">
+  <div class="card-title">Ажилчдын явц (компьютер тус бүр)</div>
+  <div id="device-list" class="device-list">
+    <div style="color:#444;font-size:12px;text-align:center;padding:16px">Өгөгдөл хүлээж байна...</div>
+  </div>
+</div>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAJVtqkHEoqphtW92rX56grrzok0eUN4cw",
+  authDomain: "sinsay-vivi.firebaseapp.com",
+  databaseURL: "https://sinsay-vivi-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sinsay-vivi",
+  storageBucket: "sinsay-vivi.firebasestorage.app",
+  messagingSenderId: "941762333615",
+  appId: "1:941762333615:web:ee23be2452aa9d0a73fd5a"
+};
+const TIR_TOTAL = 30223;
+let TIR_ID = 'sinsay_tir1';
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+function $(id){ return document.getElementById(id); }
+
+function fmtTime(ts){
+  if(!ts) return '—';
+  const diff = Math.round((Date.now()-ts)/1000);
+  if(diff < 60) return diff + 'с өмнө';
+  if(diff < 3600) return Math.floor(diff/60) + 'мин өмнө';
+  return Math.floor(diff/3600) + 'цаг өмнө';
+}
+
+// Load TIR_ID from Firebase
+db.ref('config/current_tir').on('value', function(snap){
+  const t = snap.val();
+  if(t){
+    TIR_ID = t;
+    $('current-tir').textContent = TIR_ID;
+  }
+});
+
+// ── MAIN: Listen to /scans for accurate unique count ──
+db.ref().child(TIR_ID + '/scans').on('value', function(snap){
+  const scansData = snap.val() || {};
+  const allScans = Object.values(scansData);
+  const grandTotal = allScans.length;
+
+  // Count per store
+  const totals = {fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0};
+  let latestTs = 0;
+  allScans.forEach(function(s){
+    if(s.dest && totals[s.dest] !== undefined) totals[s.dest]++;
+    if((s.ts||0) > latestTs) latestTs = s.ts||0;
+  });
+
+  // Update UI
+  $('total-scanned').textContent = grandTotal.toLocaleString();
+  const pct = Math.min(100, Math.round(grandTotal/TIR_TOTAL*100));
+  $('total-pct').textContent = pct + '%';
+  $('progress-fill').style.width = pct + '%';
+  $('last-update').textContent = 'Сүүлд: ' + fmtTime(latestTs);
+  $('scan-count-info').textContent = grandTotal + ' өвөрмөц скан';
+
+  $('st-fc').textContent = (totals.fc||0).toLocaleString();
+  $('st-dr').textContent = (totals.dr||0).toLocaleString();
+  $('st-k1').textContent = (totals.k1||0).toLocaleString();
+  $('st-k2').textContent = (totals.k2||0).toLocaleString();
+  $('st-bz').textContent = (totals.bz||0).toLocaleString();
+  $('st-ht').textContent = (totals.ht||0).toLocaleString();
+  $('st-ag').textContent = (totals.ag||0).toLocaleString();
+
+  $('conn-status').textContent = '🟢 Live';
+  $('conn-status').style.color = '#22c55e';
+});
+
+// ── Per-device info from /dashboard ──
+db.ref().child(TIR_ID + '/dashboard').on('value', function(snap){
+  const data = snap.val() || {};
+  const devices = Object.values(data);
+
+  if(!devices.length){
+    $('device-list').innerHTML = '<div style="color:#444;font-size:12px;text-align:center;padding:16px">Өгөгдөл байхгүй</div>';
+    return;
+  }
+
+  const sorted = devices.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+  $('device-list').innerHTML = sorted.map(function(d, i){
+    const isActive = (Date.now() - (d.ts||0)) < 5*60*1000;
+    const devPct = Math.round((d.totalScanned||0)/TIR_TOTAL*100);
+    return '<div class="device-row">'
+      +'<div>'
+        +'<div style="font-size:12px;font-weight:700;color:#facc15">'+(isActive?'🟢 ':'⚫ ')+'Ажилтан '+(i+1)
+        +' <span style="color:#444;font-size:10px">('+( d.deviceId||'?')+')</span></div>'
+        +'<div class="device-time">'+fmtTime(d.ts)+'</div>'
+      +'</div>'
+      +'<div style="text-align:right">'
+        +'<div class="device-count">'+(d.totalScanned||0).toLocaleString()+' ш</div>'
+        +'<div style="font-size:10px;color:#555">'+devPct+'% TIR</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+});
+
+db.ref('.info/connected').on('value', function(snap){
+  if(!snap.val()){
+    $('conn-status').textContent = '🔴 Холболт тасарсан';
+    $('conn-status').style.color = '#ef4444';
+  }
+});
+</script>
+</body>
+</html>
