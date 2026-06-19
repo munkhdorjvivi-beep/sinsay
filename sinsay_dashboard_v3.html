@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SINSAY Dashboard v3</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#09090f;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding:14px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:12px 16px;background:#111;border-radius:12px;border:1px solid #222}
+.logo{font-size:18px;font-weight:800;color:#facc15;letter-spacing:2px}
+.logo-sub{font-size:11px;color:#facc15;opacity:.7;margin-top:2px}
+.status{font-size:12px;padding:4px 10px;border-radius:6px;background:#1a1a1a}
+.refresh-btn{padding:8px 14px;border-radius:8px;background:#1e3a5f;border:1px solid #2563eb;color:#60a5fa;font-size:12px;cursor:pointer}
+
+/* MAIN PROGRESS */
+.main-card{background:#111;border:1px solid #222;border-radius:14px;padding:18px;margin-bottom:14px}
+.main-nums{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.main-big{font-size:42px;font-weight:800;font-family:monospace;color:#facc15}
+.main-total{font-size:18px;color:#444}
+.main-pct{font-size:18px;color:#22c55e;font-family:monospace;font-weight:700}
+.prog-bar{background:#1a1a1a;border-radius:6px;height:12px;overflow:hidden;margin-bottom:8px}
+.prog-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:6px;transition:width .5s}
+.main-meta{display:flex;justify-content:space-between;font-size:11px;color:#555}
+
+/* STORE GRID */
+.section-title{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 8px}
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.store-card{border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.08)}
+.store-name{font-size:10px;opacity:.7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.store-num{font-size:24px;font-weight:800;font-family:monospace;margin-bottom:6px}
+.store-prog{background:rgba(0,0,0,.3);border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px}
+.store-prog-fill{height:100%;border-radius:4px;transition:width .5s}
+.store-meta{display:flex;justify-content:space-between;font-size:10px;opacity:.6}
+.store-card.fc{background:#0d1f3c;border-color:#1e40af}.store-card.fc .store-num{color:#3b82f6}.store-card.fc .store-prog-fill{background:#3b82f6}
+.store-card.dr{background:#1e0d3c;border-color:#6d28d9}.store-card.dr .store-num{color:#8b5cf6}.store-card.dr .store-prog-fill{background:#8b5cf6}
+.store-card.k1{background:#1a0d00;border-color:#92400e}.store-card.k1 .store-num{color:#f59e0b}.store-card.k1 .store-prog-fill{background:#f59e0b}
+.store-card.k2{background:#1a1200;border-color:#a16207}.store-card.k2 .store-num{color:#eab308}.store-card.k2 .store-prog-fill{background:#eab308}
+.store-card.bz{background:#0d1f11;border-color:#166534}.store-card.bz .store-num{color:#22c55e}.store-card.bz .store-prog-fill{background:#22c55e}
+.store-card.ht{background:#1f1000;border-color:#7c2d12}.store-card.ht .store-num{color:#f97316}.store-card.ht .store-prog-fill{background:#f97316}
+.store-card.ag{background:#0f0f2e;border-color:#3730a3}.store-card.ag .store-num{color:#818cf8}.store-card.ag .store-prog-fill{background:#818cf8}
+
+/* SPEED */
+.speed-card{background:#111;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.speed-item{text-align:center;padding:10px;background:#1a1a1a;border-radius:8px}
+.speed-num{font-size:22px;font-weight:800;font-family:monospace;color:#facc15}
+.speed-label{font-size:10px;color:#555;margin-top:3px;text-transform:uppercase}
+
+/* DAILY CHART */
+.chart-card{background:#111;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:14px}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:6px}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#3b82f6,#1e40af);min-height:2px;transition:height .5s}
+.chart-bar.today{background:linear-gradient(180deg,#22c55e,#166534)}
+.chart-label{font-size:9px;color:#555;text-align:center}
+.chart-num{font-size:10px;color:#888;text-align:center}
+
+/* ALERT */
+.alert{background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#fca5a5;display:none}
+.alert.show{display:block}
+
+/* DEVICES */
+.devices-card{background:#111;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:14px}
+.device-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:8px;margin-bottom:6px;border:1px solid #2a2a2a}
+.device-row:last-child{margin-bottom:0}
+.device-info{flex:1}
+.device-name{font-size:12px;font-weight:700;color:#facc15}
+.device-time{font-size:10px;color:#555;margin-top:2px}
+.device-stats{text-align:right}
+.device-count{font-size:16px;font-weight:700;color:#22c55e;font-family:monospace}
+.device-pct{font-size:10px;color:#555}
+.device-speed{font-size:10px;color:#3b82f6;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">SINSAY DASHBOARD</div>
+    <div class="logo-sub">TIR: <span id="current-tir">sinsay_tir1</span> · v3</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="conn-status" class="status" style="color:#facc15">🟡 Холбогдож байна...</span>
+    <button class="refresh-btn" onclick="location.reload()">↻</button>
+  </div>
+</div>
+
+<!-- ALERT -->
+<div class="alert" id="alert-box">
+  ⚠️ <span id="alert-msg"></span>
+</div>
+
+<!-- MAIN PROGRESS -->
+<div class="main-card">
+  <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">TIR АНГИЛЛЫН ЯВЦ (ӨВӨРМӨЦ СКАН)</div>
+  <div class="main-nums">
+    <span id="total-scanned" class="main-big">0</span>
+    <span class="main-total">/ 30,223 ш</span>
+    <span id="total-pct" class="main-pct">0%</span>
+  </div>
+  <div class="prog-bar"><div id="progress-fill" class="prog-fill" style="width:0%"></div></div>
+  <div class="main-meta">
+    <span id="last-update">—</span>
+    <span id="remaining-text" style="color:#facc15">—</span>
+  </div>
+</div>
+
+<!-- SPEED -->
+<div class="section-title">Скан хийх хурд</div>
+<div class="speed-card">
+  <div class="speed-item">
+    <div class="speed-num" id="speed-1h">—</div>
+    <div class="speed-label">Сүүлийн 1 цаг</div>
+  </div>
+  <div class="speed-item">
+    <div class="speed-num" id="speed-today">—</div>
+    <div class="speed-label">Өнөөдөр</div>
+  </div>
+  <div class="speed-item">
+    <div class="speed-num" id="speed-avg">—</div>
+    <div class="speed-label">Цагт дундаж</div>
+  </div>
+</div>
+
+<!-- DAILY CHART -->
+<div class="section-title">Өдөр тутмын скан</div>
+<div class="chart-card">
+  <div class="chart-bars" id="chart-bars"></div>
+  <div style="display:flex;gap:6px" id="chart-labels"></div>
+</div>
+
+<!-- STORE BREAKDOWN -->
+<div class="section-title">Дэлгүүрийн хуваарилалт</div>
+
+<!-- Plans (from preload) -->
+<div style="font-size:10px;color:#3b82f6;margin-bottom:6px">📋 Нийт төлөвлөгөө (preload үндэслэн)</div>
+<div class="store-grid">
+  <div class="store-card fc">
+    <div class="store-name">Фүүд Сити</div>
+    <div class="store-num" id="st-fc">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-fc" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-fc">0%</span><span id="plan-fc">/ 8,557</span></div>
+  </div>
+  <div class="store-card dr">
+    <div class="store-name">Драгон</div>
+    <div class="store-num" id="st-dr">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-dr" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-dr">0%</span><span id="plan-dr">/ 5,629</span></div>
+  </div>
+  <div class="store-card k1">
+    <div class="store-name">Баянгол</div>
+    <div class="store-num" id="st-k1">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-k1" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-k1">0%</span><span id="plan-k1">/ 2,990</span></div>
+  </div>
+  <div class="store-card k2">
+    <div class="store-name">УИД</div>
+    <div class="store-num" id="st-k2">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-k2" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-k2">0%</span><span id="plan-k2">/ 2,331</span></div>
+  </div>
+  <div class="store-card bz">
+    <div class="store-name">Эрдэнэт</div>
+    <div class="store-num" id="st-bz">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-bz" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-bz">0%</span><span id="plan-bz">/ 2,161</span></div>
+  </div>
+  <div class="store-card ht">
+    <div class="store-name">Бөөн</div>
+    <div class="store-num" id="st-ht">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-ht" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-ht">0%</span><span>/ —</span></div>
+  </div>
+  <div class="store-card ag">
+    <div class="store-name">Агуулах</div>
+    <div class="store-num" id="st-ag">0</div>
+    <div class="store-prog"><div class="store-prog-fill" id="pr-ag" style="width:0%"></div></div>
+    <div class="store-meta"><span id="pct-ag">0%</span><span>илүүдэл</span></div>
+  </div>
+</div>
+
+<!-- DEVICES -->
+<div class="section-title">Ажилчдын явц (компьютер тус бүр)</div>
+<div class="devices-card">
+  <div id="device-list" style="color:#444;font-size:12px;text-align:center;padding:16px">Өгөгдөл хүлээж байна...</div>
+</div>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAJVtqkHEoqphtW92rX56grrzok0eUN4cw",
+  authDomain: "sinsay-vivi.firebaseapp.com",
+  databaseURL: "https://sinsay-vivi-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sinsay-vivi",
+  storageBucket: "sinsay-vivi.firebasestorage.app",
+  messagingSenderId: "941762333615",
+  appId: "1:941762333615:web:ee23be2452aa9d0a73fd5a"
+};
+
+const TIR_TOTAL = 30223;
+const STORE_PLANS = {fc:8557,dr:5629,k1:2990,k2:2331,bz:2161,ht:0,ag:0};
+let TIR_ID = 'sinsay_tir1';
+let allScans = [];
+let lastAlertTime = 0;
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+function $(id){ return document.getElementById(id); }
+
+function fmtTime(ts){
+  if(!ts) return '—';
+  const diff = Math.round((Date.now()-ts)/1000);
+  if(diff < 60) return diff + 'с өмнө';
+  if(diff < 3600) return Math.floor(diff/60) + 'мин өмнө';
+  if(diff < 86400) return Math.floor(diff/3600) + 'ц өмнө';
+  return Math.floor(diff/86400) + 'өдрийн өмнө';
+}
+
+function fmtDate(ts){
+  const d = new Date(ts);
+  return (d.getMonth()+1)+'/'+d.getDate();
+}
+
+function getDateKey(ts){
+  const d = new Date(ts);
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+
+// Load TIR_ID
+db.ref('config/current_tir').on('value', snap=>{
+  const t = snap.val();
+  if(t){ TIR_ID = t; $('current-tir').textContent = TIR_ID; }
+});
+
+// Main scans listener
+db.ref().child(TIR_ID + '/scans').on('value', snap=>{
+  const data = snap.val() || {};
+  allScans = Object.values(data);
+  updateAll();
+  $('conn-status').textContent = '🟢 Live';
+  $('conn-status').style.color = '#22c55e';
+});
+
+// Device dashboard listener
+db.ref().child(TIR_ID + '/dashboard').on('value', snap=>{
+  const data = snap.val() || {};
+  renderDevices(Object.values(data));
+});
+
+function updateAll(){
+  const totals = {fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0};
+  let latestTs = 0;
+  const dailyCounts = {};
+  const now = Date.now();
+  const oneHourAgo = now - 3600000;
+  const todayKey = getDateKey(now);
+  let countLastHour = 0;
+  let countToday = 0;
+  let firstTs = Infinity;
+
+  allScans.forEach(s=>{
+    if(s.dest && totals[s.dest]!==undefined) totals[s.dest]++;
+    if((s.ts||0) > latestTs) latestTs = s.ts||0;
+    if((s.ts||0) < firstTs && s.ts) firstTs = s.ts;
+    
+    // Daily counts
+    if(s.ts){
+      const dk = getDateKey(s.ts);
+      dailyCounts[dk] = (dailyCounts[dk]||0) + 1;
+      if(s.ts > oneHourAgo) countLastHour++;
+      if(dk === todayKey) countToday++;
+    }
+  });
+
+  const grandTotal = allScans.length;
+  const pct = Math.min(100, Math.round(grandTotal/TIR_TOTAL*100));
+  const remaining = TIR_TOTAL - grandTotal;
+
+  // Main stats
+  $('total-scanned').textContent = grandTotal.toLocaleString();
+  $('total-pct').textContent = pct + '%';
+  $('progress-fill').style.width = pct + '%';
+  $('last-update').textContent = 'Сүүлд: ' + fmtTime(latestTs);
+  $('remaining-text').textContent = '📦 Үлдэгдэл: ' + remaining.toLocaleString() + ' ш';
+
+  // Store breakdown with progress
+  ['fc','dr','k1','k2','bz','ht','ag'].forEach(k=>{
+    const v = totals[k]||0;
+    const plan = STORE_PLANS[k]||0;
+    const p = plan > 0 ? Math.min(100, Math.round(v/plan*100)) : 0;
+    if($('st-'+k)) $('st-'+k).textContent = v.toLocaleString();
+    if($('pr-'+k)) $('pr-'+k).style.width = p + '%';
+    if($('pct-'+k)) $('pct-'+k).textContent = plan > 0 ? p + '%' : '';
+  });
+
+  // Speed
+  $('speed-1h').textContent = countLastHour.toLocaleString();
+  $('speed-today').textContent = countToday.toLocaleString();
+  
+  // Average per hour since start
+  if(firstTs && firstTs < Infinity){
+    const hoursElapsed = Math.max(1, (now - firstTs) / 3600000);
+    const avgPerHour = Math.round(grandTotal / hoursElapsed);
+    $('speed-avg').textContent = avgPerHour.toLocaleString();
+  }
+
+  // Daily chart
+  renderChart(dailyCounts, todayKey);
+
+  // Alert: no scanning for 30+ minutes during work hours
+  const hour = new Date().getHours();
+  const isWorkHours = hour >= 9 && hour <= 20;
+  const minutesSinceLast = (now - latestTs) / 60000;
+  if(isWorkHours && minutesSinceLast > 30 && grandTotal > 0){
+    $('alert-box').classList.add('show');
+    $('alert-msg').textContent = Math.round(minutesSinceLast) + ' минутын турш скан хийгдээгүй байна! Ажилтнуудтай холбогдоно уу.';
+  } else {
+    $('alert-box').classList.remove('show');
+  }
+}
+
+function renderChart(dailyCounts, todayKey){
+  // Get last 7 days
+  const days = [];
+  for(let i=6; i>=0; i--){
+    const d = new Date(Date.now() - i*86400000);
+    const key = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    days.push({ key, label: (d.getMonth()+1)+'/'+(d.getDate()), count: dailyCounts[key]||0, isToday: key===todayKey });
+  }
+  
+  const maxCount = Math.max(...days.map(d=>d.count), 1);
+  
+  $('chart-bars').innerHTML = days.map(d=>{
+    const h = Math.max(2, Math.round(d.count/maxCount*76));
+    return `<div class="chart-bar-wrap">
+      <div style="font-size:9px;color:#888;text-align:center;margin-bottom:2px">${d.count||''}</div>
+      <div class="chart-bar${d.isToday?' today':''}" style="height:${h}px"></div>
+      <div class="chart-label" style="color:${d.isToday?'#22c55e':'#555'}">${d.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDevices(devices){
+  if(!devices.length){
+    $('device-list').innerHTML = '<div style="color:#444;font-size:12px;text-align:center;padding:16px">Өгөгдөл байхгүй</div>';
+    return;
+  }
+  
+  const now = Date.now();
+  const sorted = devices.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  
+  $('device-list').innerHTML = sorted.map((d,i)=>{
+    const isActive = (now-(d.ts||0)) < 5*60*1000;
+    const isRecent = (now-(d.ts||0)) < 30*60*1000;
+    const devPct = Math.round((d.totalScanned||0)/TIR_TOTAL*100);
+    const statusIcon = isActive ? '🟢' : isRecent ? '🟡' : '⚫';
+    
+    // Estimate speed from device (if available)
+    const speed = d.recentSpeed ? `${d.recentSpeed} ш/цаг` : '';
+    
+    return `<div class="device-row">
+      <div class="device-info">
+        <div class="device-name">${statusIcon} Ажилтан ${i+1} <span style="color:#444;font-size:10px">(${d.deviceId||'?'})</span></div>
+        <div class="device-time">${fmtTime(d.ts)}</div>
+        ${speed ? `<div class="device-speed">⚡ ${speed}</div>` : ''}
+      </div>
+      <div class="device-stats">
+        <div class="device-count">${(d.totalScanned||0).toLocaleString()} ш</div>
+        <div class="device-pct">${devPct}% TIR</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+db.ref('.info/connected').on('value', snap=>{
+  if(!snap.val()){
+    $('conn-status').textContent = '🔴 Холболт тасарсан';
+    $('conn-status').style.color = '#ef4444';
+  }
+});
+</script>
+</body>
+</html>
