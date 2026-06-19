@@ -2293,61 +2293,16 @@ function loadProgress(){
 }
 
 function showRestorePrompt(count,time,saved){
-  const ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:20px;';
-  ov.innerHTML=`<div style="background:var(--s1);border:2px solid var(--go);border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;">
-    <div style="font-size:36px;margin-bottom:12px">💾</div>
-    <div style="font-size:16px;font-weight:700;color:var(--txt);margin-bottom:8px">Хадгалсан явц олдлоо</div>
-    <div style="font-size:14px;color:var(--go);font-weight:700;margin-bottom:4px">${count} загвар шийдсэн</div>
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:20px">Хадгалсан: ${time}</div>
-    <button id="btn-cont" style="width:100%;padding:14px;background:var(--go);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">▶ Үргэлжлүүлэх</button>
-    <button id="btn-new" style="width:100%;padding:12px;background:transparent;color:var(--of);border:1px solid var(--of-b);border-radius:10px;font-size:13px;cursor:pointer;">🗑 Шинээр эхлэх</button>
-  </div>`;
-  document.body.appendChild(ov);
-  ov.querySelector('#btn-cont').onclick=()=>{
-    plans=saved.plans||{};
-    manualPlans=new Set(saved.manualPlans||[]);
-    scanLog=saved.scanLog||[];
-    // CRITICAL: Use saved scanQueue directly - it has correct remaining counts
-    // Do NOT rebuild from scratch - that would ignore already-scanned items
-    scanQueue=saved.scanQueue||{};
-    
-    // If scanQueue is empty but we have scanLog, rebuild it properly
-    if(Object.keys(scanQueue).length===0 && scanLog.length>0){
-      // Build fresh queue from plans
-      buildScanQueue();
-      // Then subtract all previously scanned items
-      scanLog.forEach(function(l){
-        var k=l.key||(l.model+'|'+l.size);
-        if(!scanQueue[k]) return;
-        if(l.dest==='ag'){
-          scanQueue[k].ag=(scanQueue[k].ag||0)+1;
-        } else {
-          if(scanQueue[k][l.dest]>0) scanQueue[k][l.dest]--;
-        }
-        scanQueue[k].scanned=(scanQueue[k].scanned||0)+1;
-      });
-    }
-    
-    // Recount scanTotals from scanLog (most reliable)
-    scanTotals={fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0};
-    scanLog.forEach(function(l){
-      var d=l.dest||'ag';
-      if(scanTotals[d]===undefined) scanTotals[d]=0;
-      scanTotals[d]++;
-    });
-    ov.remove();
-    updStats();buildList();renderPlanCard();updScanStats();updScanProgress();
-    toast('✅ Postęp wczytany — '+count+' загвар');
-  };
-  ov.querySelector('#btn-new').onclick=()=>{
-    localStorage.removeItem('sp');localStorage.removeItem('sp_time');
-    localStorage.removeItem('sp_plans');localStorage.removeItem('sp_log');
-    localStorage.removeItem('sp_totals');localStorage.removeItem('sp_queue');
-    ov.remove();
-    buildList();renderPlanCard();
-    toast('🗑 Шинээр эхэллээ');
-  };
+  // Auto-continue silently - no popup needed
+  // (preload already handled correct data loading)
+  plans=saved.plans||{};
+  manualPlans=new Set(saved.manualPlans||[]);
+  scanLog=saved.scanLog||[];
+  scanTotals=saved.scanTotals||{fc:0,dr:0,k1:0,k2:0,bz:0,ht:0,ag:0};
+  scanQueue=saved.scanQueue||{};
+  buildList();renderPlanCard();
+  updStats();updScanStats();
+  console.log('Auto-restored:', count, 'plans,', scanLog.length, 'scans');
 }
 
 // ── AUTO-PLAN KIDS ────────────────────────────────────────────────────────
